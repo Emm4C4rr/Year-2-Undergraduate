@@ -1,0 +1,249 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import statsmodels.api as sm
+import statsmodels.stats.api as sms
+from statsmodels.compat import lzip
+import seaborn as sns
+from scipy import stats
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+import numpy as np
+from matplotlib import cycler
+import matplotlib as mpl
+from statsmodels.stats.anova import anova_lm
+
+#APA style for plots
+IPython_default = plt.rcParams.copy()
+
+plt.rc('font', family = 'sans-serif')
+plt.rc('figure', titlesize = 'large', titleweight = 'bold')
+plt.rc('figure.subplot', wspace = 0.3, hspace = 0.3)
+plt.rc('axes', facecolor = 'white', edgecolor = 'black', labelcolor = 'black', prop_cycle = cycler('color', ['515151', 'k', '0.6', '0.4', 'k', '0.8', 'b', 'r']) + cycler('linestyle', ['-', '-', '-', '-.','-', ':','--', '-.']) + cycler('linewidth', [1.2, 1.2, 1, 0.7, 1, 0.7, 1, 0.7]), autolimit_mode = 'round_numbers', axisbelow = 'line', labelpad = 0.5, grid = False, labelweight = 'bold', titleweight = 'bold')
+plt.rc('xtick', labelsize ='small', color = 'black')
+plt.rc('ytick', labelsize ='small', color = 'black')
+plt.rc('errorbar', capsize = 10)
+plt.rc('savefig', format = 'svg', bbox = 'tight')
+mpl.rcParams['axes.spines.right'] = False
+mpl.rcParams['axes.spines.top'] = False
+
+#Dataset
+filepath = r"C:\Users\emmam\Downloads\RegressionData.csv"
+df = pd.read_csv(filepath)
+print(df)
+
+#Descriptives
+print('Mean')
+print(df.mean())
+print('Median')
+print(df.median())
+print('SD')
+print(df.std())
+print('Min')
+print(df.min())
+print('Max')
+print(df.max())
+print('IQR')
+def find_iqr(x):
+  return np.subtract(*np.percentile(x, [75, 25]))
+print(df.apply(find_iqr))
+
+#Dataset after removal of participants
+filepath = r"C:\Users\emmam\Downloads\RegressionData2.csv"
+df2 = pd.read_csv(filepath)
+print(df2)
+
+#Descriptives
+print('Mean')
+print(df2.mean())
+print('Median')
+print(df2.median())
+print('SD')
+print(df2.std())
+print('Min')
+print(df2.min())
+print('Max')
+print(df2.max())
+print('IQR')
+def find_iqr(x):
+  return np.subtract(*np.percentile(x, [75, 25]))
+print(df2.apply(find_iqr))
+
+#Model fit for OLS regression
+block1_predictors = ['UE', 'Ishihara']
+block2_predictors = ['CD']
+block3_predictors = ['IN','IA']
+
+# Block 1
+X_block1 = df2[block1_predictors]
+X_block1 = sm.add_constant(X_block1)
+model_block1 = sm.OLS(df2['ME1-4'], X_block1).fit()
+
+# Block 2 (adding predictors from Block 1)
+X_block2 = df2[block1_predictors + block2_predictors]
+X_block2 = sm.add_constant(X_block2)
+model_block2 = sm.OLS(df2['ME1-4'], X_block2).fit()
+
+# Block 3 (adding predictors from Block 2)
+X_block3 = df2[block1_predictors + block2_predictors + block3_predictors]
+X_block3 = sm.add_constant(X_block3)
+model_block3 = sm.OLS(df2['ME1-4'], X_block3).fit()
+
+#Assumption tests
+    #Cooks distance
+np.set_printoptions(suppress=True)
+influence = model_block1.get_influence()
+
+cooks = influence.cooks_distance
+print(cooks)
+
+np.set_printoptions(suppress=True)
+influence = model_block2.get_influence()
+
+cooks = influence.cooks_distance
+print(cooks)
+
+np.set_printoptions(suppress=True)
+influence = model_block3.get_influence()
+
+cooks = influence.cooks_distance
+print(cooks)
+
+    #linearity
+plt.scatter(df2['CD'], df2['ME1-4'])
+plt.ylabel("MEindex")
+plt.xlabel("Cognitive Disorganisation")
+plt.show()
+
+plt.scatter(df2['IN'], df2['ME1-4'])
+plt.ylabel("MEindex")
+plt.xlabel("Impulsive Nonconformity")
+plt.show()
+
+plt.scatter(df2['IA'], df2['ME1-4'])
+plt.ylabel("MEindex")
+plt.xlabel("Introvertive Anhedonia")
+plt.show()
+
+plt.scatter(df2['UE'], df2['ME1-4'])
+plt.ylabel("MEindex")
+plt.xlabel("Unusual Experiences")
+plt.show()
+
+plt.scatter(df2['Ishihara'], df2['ME1-4'])
+plt.ylabel("MEindex")
+plt.xlabel("Ishihara")
+plt.show()
+
+        #assumption met
+
+    #Normaility
+sns.displot(model_block1.resid, kde=True)
+plt.xlabel('Regression Standardized Residual')
+plt.ylabel('Frequency')
+
+
+print(stats.shapiro(model_block1.resid))
+
+probplot =sm.ProbPlot(model_block1.resid,stats.norm,fit=True)
+fig=probplot.qqplot(line='45')
+
+
+sns.displot(model_block2.resid, kde=True)
+plt.xlabel('Regression Standardized Residual')
+plt.ylabel('Frequency')
+
+
+print(stats.shapiro(model_block2.resid))
+
+probplot =sm.ProbPlot(model_block2.resid,stats.norm,fit=True)
+fig=probplot.qqplot(line='45')
+
+sns.displot(model_block3.resid, kde=True)
+plt.xlabel('Regression Standardized Residual')
+plt.ylabel('Frequency')
+
+print(stats.shapiro(model_block3.resid))
+
+probplot =sm.ProbPlot(model_block3.resid,stats.norm,fit=True)
+fig=probplot.qqplot(line='45')
+plt.show()
+
+        #assumption not met
+
+    #multicollinearity
+plt.figure(figsize = (10,8))
+sns.heatmap(df2.corr(),annot=True)
+plt.title('Correlation of Variables')
+plt.savefig(fname = 'HeatmapLab4')
+plt.show()
+
+X = df2[['CD', 'IN', 'IA', 'UE', 'Ishihara']]
+X['intercept'] = 1
+vif_data = pd.DataFrame()
+vif_data["feature"] = X.columns
+vif_data["VIF"] = [variance_inflation_factor(X.values, i) for i in range(len(X.columns))]
+vif_data = vif_data[vif_data['feature']!='intercept']
+print(vif_data)
+
+        #assumption met
+
+    #Homoscedasticity
+name = ['Lagrange multiplier statistic', 'p-value',
+        'f-value', 'f p-value']
+test = sms.het_breuschpagan(model_block1.resid, model_block1.model.exog)
+print(lzip(name, test))
+
+plt.subplots(figsize=(12, 6))
+ax = plt.subplot(111)  # To remove spines
+plt.scatter(x=df2.index, y=model_block1.resid, alpha=0.5)
+plt.plot(np.repeat(0, df2.index.max()), color='black', linestyle='--')
+plt.xlabel('Regression Standardized Predicted value')
+plt.ylabel('Regression Standardized Residual')
+plt.savefig(fname = 'HomoscadLab4')
+
+name = ['Lagrange multiplier statistic', 'p-value',
+        'f-value', 'f p-value']
+test = sms.het_breuschpagan(model_block2.resid, model_block2.model.exog)
+print(lzip(name, test))
+
+plt.subplots(figsize=(12, 6))
+ax = plt.subplot(111)  # To remove spines
+plt.scatter(x=df2.index, y=model_block2.resid, alpha=0.5)
+plt.plot(np.repeat(0, df2.index.max()), color='black', linestyle='--')
+plt.xlabel('Regression Standardized Predicted value')
+plt.ylabel('Regression Standardized Residual')
+plt.savefig(fname = 'HomoscadLab4')
+
+name = ['Lagrange multiplier statistic', 'p-value',
+        'f-value', 'f p-value']
+test = sms.het_breuschpagan(model_block3.resid, model_block3.model.exog)
+print(lzip(name, test))
+
+plt.subplots(figsize=(12, 6))
+ax = plt.subplot(111)  # To remove spines
+plt.scatter(x=df2.index, y=model_block3.resid, alpha=0.5)
+plt.plot(np.repeat(0, df2.index.max()), color='black', linestyle='--')
+plt.xlabel('Regression Standardized Predicted value')
+plt.ylabel('Regression Standardized Residual')
+plt.savefig(fname = 'HomoscadLab4')
+plt.show()
+
+        #assumption met
+
+#regression analysis
+print(model_block1.summary())
+print(model_block2.summary())
+print(model_block3.summary())
+
+anova_lm(model_block1, model_block2, model_block3)
+
+        #autocorrelation is met
+
+#One sample t-test checks
+    #O-life
+print(stats.ttest_1samp(df2['CD'], popmean=10.73))
+print(stats.ttest_1samp(df2['IN'], popmean=7.69))
+print(stats.ttest_1samp(df2['IA'], popmean=6.38))
+print(stats.ttest_1samp(df2['UE'], popmean=8.82))
+
+    #MEindex
+print(stats.ttest_1samp(df2['ME1-4'], popmean=0))
