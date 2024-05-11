@@ -176,13 +176,29 @@ plt.title('Correlation of Variables')
 plt.savefig(fname = 'HeatmapLab4')
 plt.show()
 
+X = df2[['UE', 'Ishihara']]
+X['intercept'] = 1
+vif_data1 = pd.DataFrame()
+vif_data1["feature"] = X.columns
+vif_data1["VIF"] = [variance_inflation_factor(X.values, i) for i in range(len(X.columns))]
+vif_data = vif_data1[vif_data1['feature']!='intercept']
+print(vif_data1)
+
+X = df2[['CD', 'UE', 'Ishihara']]
+X['intercept'] = 1
+vif_data2 = pd.DataFrame()
+vif_data2["feature"] = X.columns
+vif_data2["VIF"] = [variance_inflation_factor(X.values, i) for i in range(len(X.columns))]
+vif_data2 = vif_data2[vif_data2['feature']!='intercept']
+print(vif_data2)
+
 X = df2[['CD', 'IN', 'IA', 'UE', 'Ishihara']]
 X['intercept'] = 1
-vif_data = pd.DataFrame()
-vif_data["feature"] = X.columns
-vif_data["VIF"] = [variance_inflation_factor(X.values, i) for i in range(len(X.columns))]
-vif_data = vif_data[vif_data['feature']!='intercept']
-print(vif_data)
+vif_data3 = pd.DataFrame()
+vif_data3["feature"] = X.columns
+vif_data3["VIF"] = [variance_inflation_factor(X.values, i) for i in range(len(X.columns))]
+vif_data3 = vif_data3[vif_data3['feature']!='intercept']
+print(vif_data3)
 
         #assumption met
 
@@ -234,7 +250,7 @@ print(model_block1.summary())
 print(model_block2.summary())
 print(model_block3.summary())
 
-anova_lm(model_block1, model_block2, model_block3)
+print(anova_lm(model_block1, model_block2, model_block3))
 
         #autocorrelation is met
 
