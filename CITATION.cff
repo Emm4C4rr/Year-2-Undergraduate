@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+title: Multiple linear regression (Lab report 4)
+abstract: Lab report 4 multiple linear regression of the McCollough effect index and schizotypy O-life subscales
+authors:
+  - family-names: Carr
+    given-names: Emma
+date-released: "2024-05-11"
+identifiers:
+  - description:
+    type: doi
+    value: "10.5281/zenodo.11179726"
